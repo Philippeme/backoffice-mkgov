@@ -1,0 +1,93 @@
+menu:
+  dashboard: "Tableau de bord"
+  requests: "Demandes"
+  procedures: "Procédures"
+  documents: "Documents"
+  users: "Utilisateurs"
+  public_entities: "Entités Publiques"
+  system: "Système"
+  settings: "Paramètres"
+  reference_data: "Données de Référence"
+  logs: "Journaux"
+
+dashboard:
+  title: "Tableau de bord"
+  subtitle: "Bienvenue dans le panneau d'administration MK Gov"
+  refresh: "Actualiser"
+  export: "Exporter"
+  filters:
+    title: "Filtres du tableau de bord"
+    region: "Région"
+    service_family: "Famille de services"
+    status: "Statut"
+    year: "Année"
+    all_regions: "Toutes les régions"
+    all_services: "Tous les services"
+    all_statuses: "Tous les statuts"
+    apply: "Appliquer les filtres"
+  stats:
+    total_requests: "Total des demandes"
+    completed_requests: "Demandes complétées"
+    pending_requests: "Demandes en attente"
+    active_users: "Utilisateurs actifs"
+  map:
+    title: "Carte de distribution des demandes"
+    legend:
+      high: "Activité élevée"
+      medium: "Activité moyenne"
+      low: "Activité faible"
+  charts:
+    requests_by_service: "Demandes par famille de services"
+    requests_timeline: "Chronologie des demandes"
+    status_distribution: "Distribution des statuts"
+  recent_requests:
+    title: "Demandes récentes"
+    id: "ID"
+    service: "Service"
+    user: "Utilisateur"
+    status: "Statut"
+    date: "Date"
+    actions: "Actions"
+  quick_actions:
+    title: "Actions rapides"
+    new_request: "Nouvelle demande"
+    new_procedure: "Nouvelle procédure"
+    new_user: "Nouvel utilisateur"
+    new_entity: "Nouvelle entité"
+    pending_tasks: "Tâches en attente"
+    pending_approvals: "Approbations en attente"
+    pending_documents: "Documents en attente"
+    system_alerts: "Alertes système"
+
+header:
+  notifications: "Notifications"
+  view_all_notifications: "Voir toutes les notifications"
+  profile: "Profil"
+  settings: "Paramètres"
+  logout: "Déconnexion"
+
+breadcrumb:
+  dashboard: "Tableau de bord"
+
+status:
+  pending: "En attente"
+  processing: "En traitement"
+  completed: "Terminé"
+  rejected: "Rejeté"
+  approved: "Approuvé"
+
+footer:
+  all_rights_reserved: "Tous droits réservés"
+  version: "Version"
+
+categories:
+  police_justice:
+    name: "Police & Justice"
+  family:
+    name: "Famille"
+  transport:
+    name: "Transport"
+  education:
+    name: "Éducation"
+  business:
+    name: "Entreprises"

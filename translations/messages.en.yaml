@@ -1,0 +1,93 @@
+menu:
+  dashboard: "Dashboard"
+  requests: "Requests"
+  procedures: "Procedures"
+  documents: "Documents"
+  users: "Users"
+  public_entities: "Public Entities"
+  system: "System"
+  settings: "Settings"
+  reference_data: "Reference Data"
+  logs: "Logs"
+
+dashboard:
+  title: "Dashboard"
+  subtitle: "Welcome to MK Gov Administration Panel"
+  refresh: "Refresh"
+  export: "Export"
+  filters:
+    title: "Dashboard Filters"
+    region: "Region"
+    service_family: "Service Family"
+    status: "Status"
+    year: "Year"
+    all_regions: "All Regions"
+    all_services: "All Services"
+    all_statuses: "All Statuses"
+    apply: "Apply Filters"
+  stats:
+    total_requests: "Total Requests"
+    completed_requests: "Completed Requests"
+    pending_requests: "Pending Requests"
+    active_users: "Active Users"
+  map:
+    title: "Requests Distribution Map"
+    legend:
+      high: "High Activity"
+      medium: "Medium Activity"
+      low: "Low Activity"
+  charts:
+    requests_by_service: "Requests by Service Family"
+    requests_timeline: "Requests Timeline"
+    status_distribution: "Status Distribution"
+  recent_requests:
+    title: "Recent Requests"
+    id: "ID"
+    service: "Service"
+    user: "User"
+    status: "Status"
+    date: "Date"
+    actions: "Actions"
+  quick_actions:
+    title: "Quick Actions"
+    new_request: "New Request"
+    new_procedure: "New Procedure"
+    new_user: "New User"
+    new_entity: "New Entity"
+    pending_tasks: "Pending Tasks"
+    pending_approvals: "Pending Approvals"
+    pending_documents: "Pending Documents"
+    system_alerts: "System Alerts"
+
+header:
+  notifications: "Notifications"
+  view_all_notifications: "View All Notifications"
+  profile: "Profile"
+  settings: "Settings"
+  logout: "Logout"
+
+breadcrumb:
+  dashboard: "Dashboard"
+
+status:
+  pending: "Pending"
+  processing: "Processing"
+  completed: "Completed"
+  rejected: "Rejected"
+  approved: "Approved"
+
+footer:
+  all_rights_reserved: "All rights reserved"
+  version: "Version"
+
+categories:
+  police_justice:
+    name: "Police & Justice"
+  family:
+    name: "Family"
+  transport:
+    name: "Transport"
+  education:
+    name: "Education"
+  business:
+    name: "Business"

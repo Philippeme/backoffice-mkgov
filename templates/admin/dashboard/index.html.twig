@@ -1,0 +1,384 @@
+{# templates/admin/dashboard/index.html.twig #}
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}{{ 'dashboard.title'|trans }} - MK Gov Admin{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    {{ 'dashboard.title'|trans }}
+                </h1>
+                <p class="page-subtitle text-muted">{{ 'dashboard.subtitle'|trans }}</p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" id="refreshDashboard">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        {{ 'dashboard.refresh'|trans }}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i>
+                        {{ 'dashboard.export'|trans }}
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-export="pdf"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="#" data-export="excel"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                        <li><a class="dropdown-item" href="#" data-export="csv"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Dashboard Filters -->
+    <div class="dashboard-filters mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    {{ 'dashboard.filters.title'|trans }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="dashboardFilters">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{{ 'dashboard.filters.region'|trans }}</label>
+                            <select class="form-select" name="region" id="filterRegion">
+                                <option value="">{{ 'dashboard.filters.all_regions'|trans }}</option>
+                                <option value="centre">Centre</option>
+                                <option value="littoral">Littoral</option>
+                                <option value="ouest">Ouest</option>
+                                <option value="nord">Nord</option>
+                                <option value="adamaoua">Adamaoua</option>
+                                <option value="est">Est</option>
+                                <option value="nord-ouest">Nord-Ouest</option>
+                                <option value="sud-ouest">Sud-Ouest</option>
+                                <option value="sud">Sud</option>
+                                <option value="extreme-nord">Extrême-Nord</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{{ 'dashboard.filters.service_family'|trans }}</label>
+                            <select class="form-select" name="service_family" id="filterServiceFamily">
+                                <option value="">{{ 'dashboard.filters.all_services'|trans }}</option>
+                                <option value="police_justice">{{ 'categories.police_justice.name'|trans }}</option>
+                                <option value="family">{{ 'categories.family.name'|trans }}</option>
+                                <option value="transport">{{ 'categories.transport.name'|trans }}</option>
+                                <option value="education">{{ 'categories.education.name'|trans }}</option>
+                                <option value="business">{{ 'categories.business.name'|trans }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ 'dashboard.filters.status'|trans }}</label>
+                            <select class="form-select" name="status" id="filterStatus">
+                                <option value="">{{ 'dashboard.filters.all_statuses'|trans }}</option>
+                                <option value="pending">{{ 'status.pending'|trans }}</option>
+                                <option value="processing">{{ 'status.processing'|trans }}</option>
+                                <option value="completed">{{ 'status.completed'|trans }}</option>
+                                <option value="rejected">{{ 'status.rejected'|trans }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ 'dashboard.filters.year'|trans }}</label>
+                            <select class="form-select" name="year" id="filterYear">
+                                <option value="{{ 'now'|date('Y') }}">{{ 'now'|date('Y') }}</option>
+                                <option value="{{ 'now'|date('Y') - 1 }}">{{ 'now'|date('Y') - 1 }}</option>
+                                <option value="{{ 'now'|date('Y') - 2 }}">{{ 'now'|date('Y') - 2 }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="button" class="btn btn-primary d-block w-100" id="applyFilters">
+                                <i class="fas fa-search me-1"></i>
+                                {{ 'dashboard.filters.apply'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card bg-primary">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="totalRequests">{{ stats.total_requests|default(0) }}</div>
+                        <div class="stats-label">{{ 'dashboard.stats.total_requests'|trans }}</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="requestsChange">+12%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card bg-success">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="completedRequests">{{ stats.completed_requests|default(0) }}</div>
+                        <div class="stats-label">{{ 'dashboard.stats.completed_requests'|trans }}</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="completedChange">+8%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card bg-warning">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="pendingRequests">{{ stats.pending_requests|default(0) }}</div>
+                        <div class="stats-label">{{ 'dashboard.stats.pending_requests'|trans }}</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-down"></i>
+                            <span id="pendingChange">-5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card bg-info">
+                <div class="stats-card-body">
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="activeUsers">{{ stats.active_users|default(0) }}</div>
+                        <div class="stats-label">{{ 'dashboard.stats.active_users'|trans }}</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i>
+                            <span id="usersChange">+15%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Map Row -->
+    <div class="row g-4 mb-4">
+        <!-- Interactive Map -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map-marked-alt me-2"></i>
+                        {{ 'dashboard.map.title'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="cameroonMap" style="height: 500px;"></div>
+                    <div class="map-legend mt-3">
+                        <div class="d-flex justify-content-center flex-wrap gap-3">
+                            <span class="legend-item">
+                                <span class="legend-color bg-success"></span>
+                                {{ 'dashboard.map.legend.high'|trans }}
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color bg-warning"></span>
+                                {{ 'dashboard.map.legend.medium'|trans }}
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color bg-danger"></span>
+                                {{ 'dashboard.map.legend.low'|trans }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Requests by Service Family -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        {{ 'dashboard.charts.requests_by_service'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="servicesPieChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Requests Timeline -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        {{ 'dashboard.charts.requests_timeline'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="requestsTimelineChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Distribution -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        {{ 'dashboard.charts.status_distribution'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusDistributionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Quick Actions -->
+    <div class="row g-4">
+        <!-- Recent Requests -->
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        {{ 'dashboard.recent_requests.title'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'dashboard.recent_requests.id'|trans }}</th>
+                                    <th>{{ 'dashboard.recent_requests.service'|trans }}</th>
+                                    <th>{{ 'dashboard.recent_requests.user'|trans }}</th>
+                                    <th>{{ 'dashboard.recent_requests.status'|trans }}</th>
+                                    <th>{{ 'dashboard.recent_requests.date'|trans }}</th>
+                                    <th>{{ 'dashboard.recent_requests.actions'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentRequestsTable">
+                                {% for request in recent_requests|default([]) %}
+                                    <tr>
+                                        <td><span class="text-muted">#{{ request.id }}</span></td>
+                                        <td>{{ request.service_name }}</td>
+                                        <td>{{ request.user_name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ request.status == 'completed' ? 'success' : (request.status == 'pending' ? 'warning' : 'primary') }}">
+                                                {{ ('status.' ~ request.status)|trans }}
+                                            </span>
+                                        </td>
+                                        <td>{{ request.created_at|date('d/m/Y H:i') }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ path('admin_requests_show', {id: request.id}) }}" class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ path('admin_requests_edit', {id: request.id}) }}" class="btn btn-outline-secondary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        {{ 'dashboard.quick_actions.title'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('admin_requests_new') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            {{ 'dashboard.quick_actions.new_request'|trans }}
+                        </a>
+                        <a href="{{ path('admin_procedures_new') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-cogs me-2"></i>
+                            {{ 'dashboard.quick_actions.new_procedure'|trans }}
+                        </a>
+                        <a href="{{ path('admin_users_new') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus me-2"></i>
+                            {{ 'dashboard.quick_actions.new_user'|trans }}
+                        </a>
+                        <a href="{{ path('admin_entities_new') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-building me-2"></i>
+                            {{ 'dashboard.quick_actions.new_entity'|trans }}
+                        </a>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="text-muted mb-3">{{ 'dashboard.quick_actions.pending_tasks'|trans }}</h6>
+                    <div class="pending-tasks">
+                        <div class="pending-task">
+                            <span class="task-count badge bg-warning">{{ stats.pending_approvals|default(0) }}</span>
+                            <span class="task-label">{{ 'dashboard.quick_actions.pending_approvals'|trans }}</span>
+                        </div>
+                        <div class="pending-task">
+                            <span class="task-count badge bg-info">{{ stats.pending_documents|default(0) }}</span>
+                            <span class="task-label">{{ 'dashboard.quick_actions.pending_documents'|trans }}</span>
+                        </div>
+                        <div class="pending-task">
+                            <span class="task-count badge bg-secondary">{{ stats.system_alerts|default(0) }}</span>
+                            <span class="task-label">{{ 'dashboard.quick_actions.system_alerts'|trans }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Dashboard
+            const dashboard = new MKGovDashboard();
+            dashboard.init();
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,28 @@
+parameters:
+    app.supported_locales: 'en|fr'
+    app.default_locale: 'en'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # Custom services for MK Gov backoffice
+    App\Service\StatisticsService:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+
+    App\Service\MapService:
+        arguments:
+            $statisticsService: '@App\Service\StatisticsService'

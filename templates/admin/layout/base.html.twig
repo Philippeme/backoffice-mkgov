@@ -1,0 +1,247 @@
+{# templates/admin/layout/base.html.twig #}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title|default('Dashboard') }} - MK Gov Admin{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap and Custom Styles -->
+    {{ encore_entry_link_tags('admin') }}
+    
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="admin-layout">
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-content">
+                <!-- Logo -->
+                <div class="sidebar-brand">
+                    <a href="{{ path('admin_dashboard') }}" class="brand-link">
+                        <img src="{{ asset('images/logo/mk-gov-logo.png') }}" alt="MK Gov" class="brand-image">
+                        <span class="brand-text">MK Gov Admin</span>
+                    </a>
+                </div>
+
+                <!-- Navigation Menu -->
+                <ul class="sidebar-nav">
+                    <li class="nav-item {{ active_menu == 'dashboard' ? 'active' : '' }}">
+                        <a href="{{ path('admin_dashboard') }}" class="nav-link">
+                            <i class="fas fa-tachometer-alt nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.dashboard'|trans }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item {{ active_menu == 'requests' ? 'active' : '' }}">
+                        <a href="{{ path('admin_requests_index') }}" class="nav-link">
+                            <i class="fas fa-file-alt nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.requests'|trans }}</span>
+                            <span class="nav-badge badge bg-primary">{{ pending_requests_count|default(0) }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item {{ active_menu == 'procedures' ? 'active' : '' }}">
+                        <a href="{{ path('admin_procedures_index') }}" class="nav-link">
+                            <i class="fas fa-cogs nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.procedures'|trans }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item {{ active_menu == 'documents' ? 'active' : '' }}">
+                        <a href="{{ path('admin_documents_index') }}" class="nav-link">
+                            <i class="fas fa-folder nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.documents'|trans }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item {{ active_menu == 'users' ? 'active' : '' }}">
+                        <a href="{{ path('admin_users_index') }}" class="nav-link">
+                            <i class="fas fa-users nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.users'|trans }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item {{ active_menu == 'entities' ? 'active' : '' }}">
+                        <a href="{{ path('admin_entities_index') }}" class="nav-link">
+                            <i class="fas fa-building nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.public_entities'|trans }}</span>
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item {{ active_menu == 'system' ? 'active' : '' }}">
+                        <a href="#" class="nav-link nav-dropdown-toggle">
+                            <i class="fas fa-cog nav-icon"></i>
+                            <span class="nav-text">{{ 'menu.system'|trans }}</span>
+                            <i class="fas fa-chevron-down nav-arrow"></i>
+                        </a>
+                        <ul class="nav-dropdown">
+                            <li><a href="{{ path('admin_system_settings') }}" class="nav-link">{{ 'menu.settings'|trans }}</a></li>
+                            <li><a href="{{ path('admin_system_reference_data') }}" class="nav-link">{{ 'menu.reference_data'|trans }}</a></li>
+                            <li><a href="{{ path('admin_system_logs') }}" class="nav-link">{{ 'menu.logs'|trans }}</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="sidebar-toggle btn btn-link">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <div class="breadcrumb-container">
+                        {% block breadcrumb %}
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item">
+                                        <a href="{{ path('admin_dashboard') }}">{{ 'breadcrumb.dashboard'|trans }}</a>
+                                    </li>
+                                    <li class="breadcrumb-item active">{{ page_title|default('Dashboard') }}</li>
+                                </ol>
+                            </nav>
+                        {% endblock %}
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <!-- Language Switcher -->
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-globe"></i>
+                            {{ app.request.locale|upper }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'_locale': 'en'})) }}">English</a></li>
+                            <li><a class="dropdown-item" href="{{ path(app.request.attributes.get('_route'), app.request.attributes.get('_route_params')|merge({'_locale': 'fr'})) }}">Français</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle position-relative" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ notifications_count|default(0) }}
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end notifications-dropdown">
+                            <div class="dropdown-header">{{ 'header.notifications'|trans }}</div>
+                            {% for notification in recent_notifications|default([]) %}
+                                <a class="dropdown-item" href="#">
+                                    <div class="notification-item">
+                                        <div class="notification-icon">
+                                            <i class="fas {{ notification.icon }}"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">{{ notification.title }}</div>
+                                            <div class="notification-time">{{ notification.created_at|date('H:i') }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                            <div class="dropdown-footer">
+                                <a href="#" class="text-center">{{ 'header.view_all_notifications'|trans }}</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="dropdown">
+                        <button class="btn btn-link dropdown-toggle user-menu" type="button" data-bs-toggle="dropdown">
+                            <img src="{{ asset('images/avatars/default-avatar.png') }}" alt="User" class="user-avatar">
+                            <span class="user-name">{{ app.user.fullName|default('Admin User') }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle me-2"></i>{{ 'header.profile'|trans }}</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>{{ 'header.settings'|trans }}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="fas fa-sign-out-alt me-2"></i>{{ 'header.logout'|trans }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="page-content">
+                <!-- Flash Messages -->
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+
+                <!-- Page Header -->
+                {% block page_header %}
+                    <div class="page-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h1 class="page-title">{{ page_title|default('Dashboard') }}</h1>
+                                {% block page_description %}{% endblock %}
+                            </div>
+                            <div class="col-auto">
+                                {% block page_actions %}{% endblock %}
+                            </div>
+                        </div>
+                    </div>
+                {% endblock %}
+
+                <!-- Page Body -->
+                <div class="page-body">
+                    {% block body %}{% endblock %}
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="main-footer">
+                <div class="footer-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <span class="text-muted">© {{ 'now'|date('Y') }} MK Gov Admin. {{ 'footer.all_rights_reserved'|trans }}</span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <span class="text-muted">{{ 'footer.version'|trans }} 1.0.0</span>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    {{ encore_entry_script_tags('admin') }}
+    {% block javascripts %}{% endblock %}
+    
+    <!-- Page-specific scripts -->
+    <script>
+        // Global configuration
+        window.MKGovAdmin = {
+            locale: '{{ app.request.locale }}',
+            csrf_token: '{{ csrf_token('app') }}',
+            routes: {
+                dashboard_stats: '{{ path('admin_dashboard_stats') }}',
+                dashboard_map: '{{ path('admin_dashboard_map_data') }}',
+                dashboard_charts: '{{ path('admin_dashboard_charts', {type: 'TYPE'}) }}'
+            }
+        };
+    </script>
+</body>
+</html>

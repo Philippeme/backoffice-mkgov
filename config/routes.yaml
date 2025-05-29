@@ -1,0 +1,32 @@
+app_admin:
+    resource: ../src/Controller/Admin/
+    type: attribute
+    prefix: /admin
+
+app_security:
+    resource: ../src/Controller/SecurityController.php
+    type: attribute
+
+# Dashboard route
+admin_dashboard:
+    path: /admin
+    controller: App\Controller\Admin\DashboardController::index
+    methods: [GET]
+
+# API routes for dashboard data
+admin_dashboard_stats:
+    path: /admin/api/dashboard/stats
+    controller: App\Controller\Admin\DashboardController::getStats
+    methods: [GET]
+
+admin_dashboard_map_data:
+    path: /admin/api/dashboard/map
+    controller: App\Controller\Admin\DashboardController::getMapData
+    methods: [GET]
+
+admin_dashboard_charts:
+    path: /admin/api/dashboard/charts/{type}
+    controller: App\Controller\Admin\DashboardController::getChartData
+    methods: [GET]
+    requirements:
+        type: requests|procedures|users|entities
