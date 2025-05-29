@@ -1,0 +1,418 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}{{ page_title }} - MK Gov Admin{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="fas fa-cog me-2"></i>
+                    {{ page_title }}
+                </h1>
+                <p class="page-subtitle text-muted">Configure system-wide settings and preferences</p>
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-outline-secondary" onclick="resetToDefaults()">
+                    <i class="fas fa-undo me-1"></i>
+                    Reset to Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <form method="POST" id="settingsForm">
+        <div class="row">
+            <!-- General Settings -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-globe me-2"></i>
+                            General Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Site Name</label>
+                                <input type="text" class="form-control" name="settings[site_name]" value="{{ settings.site_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Default Language</label>
+                                <select class="form-select" name="settings[default_language]">
+                                    <option value="en" {{ settings.default_language == 'en' ? 'selected' : '' }}>English</option>
+                                    <option value="fr" {{ settings.default_language == 'fr' ? 'selected' : '' }}>Français</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Site Description</label>
+                                <textarea class="form-control" name="settings[site_description]" rows="3">{{ settings.site_description }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Timezone</label>
+                                <select class="form-select" name="settings[timezone]">
+                                    <option value="Africa/Douala" {{ settings.timezone == 'Africa/Douala' ? 'selected' : '' }}>Africa/Douala (GMT+1)</option>
+                                    <option value="UTC" {{ settings.timezone == 'UTC' ? 'selected' : '' }}>UTC (GMT+0)</option>
+                                    <option value="Europe/Paris" {{ settings.timezone == 'Europe/Paris' ? 'selected' : '' }}>Europe/Paris (GMT+1)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Items per Page</label>
+                                <select class="form-select" name="settings[items_per_page]">
+                                    <option value="10" {{ settings.items_per_page == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="20" {{ settings.items_per_page == 20 ? 'selected' : '' }}>20</option>
+                                    <option value="50" {{ settings.items_per_page == 50 ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ settings.items_per_page == 100 ? 'selected' : '' }}>100</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Upload Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>
+                            File Upload Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Maximum File Size</label>
+                                <select class="form-select" name="settings[max_file_size]">
+                                    <option value="5MB" {{ settings.max_file_size == '5MB' ? 'selected' : '' }}>5 MB</option>
+                                    <option value="10MB" {{ settings.max_file_size == '10MB' ? 'selected' : '' }}>10 MB</option>
+                                    <option value="25MB" {{ settings.max_file_size == '25MB' ? 'selected' : '' }}>25 MB</option>
+                                    <option value="50MB" {{ settings.max_file_size == '50MB' ? 'selected' : '' }}>50 MB</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Allowed File Types</label>
+                                <input type="text" class="form-control" name="settings[allowed_file_types]" value="{{ settings.allowed_file_types }}" placeholder="pdf,doc,docx,jpg,png">
+                                <small class="form-text text-muted">Comma-separated list of file extensions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Security Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Minimum Password Length</label>
+                                <select class="form-select" name="settings[password_min_length]">
+                                    <option value="6" {{ settings.password_min_length == 6 ? 'selected' : '' }}>6 characters</option>
+                                    <option value="8" {{ settings.password_min_length == 8 ? 'selected' : '' }}>8 characters</option>
+                                    <option value="10" {{ settings.password_min_length == 10 ? 'selected' : '' }}>10 characters</option>
+                                    <option value="12" {{ settings.password_min_length == 12 ? 'selected' : '' }}>12 characters</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Session Timeout (seconds)</label>
+                                <select class="form-select" name="settings[session_timeout]">
+                                    <option value="1800" {{ settings.session_timeout == 1800 ? 'selected' : '' }}>30 minutes</option>
+                                    <option value="3600" {{ settings.session_timeout == 3600 ? 'selected' : '' }}>1 hour</option>
+                                    <option value="7200" {{ settings.session_timeout == 7200 ? 'selected' : '' }}>2 hours</option>
+                                    <option value="14400" {{ settings.session_timeout == 14400 ? 'selected' : '' }}>4 hours</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-database me-2"></i>
+                            Backup & Maintenance
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Backup Frequency</label>
+                                <select class="form-select" name="settings[backup_frequency]">
+                                    <option value="hourly" {{ settings.backup_frequency == 'hourly' ? 'selected' : '' }}>Hourly</option>
+                                    <option value="daily" {{ settings.backup_frequency == 'daily' ? 'selected' : '' }}>Daily</option>
+                                    <option value="weekly" {{ settings.backup_frequency == 'weekly' ? 'selected' : '' }}>Weekly</option>
+                                    <option value="monthly" {{ settings.backup_frequency == 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Log Retention (days)</label>
+                                <select class="form-select" name="settings[log_retention_days]">
+                                    <option value="7" {{ settings.log_retention_days == 7 ? 'selected' : '' }}>7 days</option>
+                                    <option value="30" {{ settings.log_retention_days == 30 ? 'selected' : '' }}>30 days</option>
+                                    <option value="90" {{ settings.log_retention_days == 90 ? 'selected' : '' }}>90 days</option>
+                                    <option value="365" {{ settings.log_retention_days == 365 ? 'selected' : '' }}>1 year</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status & Features -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-toggle-on me-2"></i>
+                            System Features
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-medium">Email Notifications</div>
+                                    <small class="text-muted">Send email alerts to users</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="settings[email_notifications]" {{ settings.email_notifications ? 'checked' : '' }}>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-medium">SMS Notifications</div>
+                                    <small class="text-muted">Send SMS alerts to users</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="settings[sms_notifications]" {{ settings.sms_notifications ? 'checked' : '' }}>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-medium">User Registration</div>
+                                    <small class="text-muted">Allow new user registration</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="settings[registration_enabled]" {{ settings.registration_enabled ? 'checked' : '' }}>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <div class="fw-medium">Maintenance Mode</div>
+                                    <small class="text-muted">Put system in maintenance mode</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="settings[maintenance_mode]" {{ settings.maintenance_mode ? 'checked' : '' }}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            System Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 text-sm">
+                            <div class="col-6"><strong>Version:</strong></div>
+                            <div class="col-6">v1.0.0</div>
+                            
+                            <div class="col-6"><strong>PHP Version:</strong></div>
+                            <div class="col-6">{{ constant('PHP_VERSION') }}</div>
+                            
+                            <div class="col-6"><strong>Symfony:</strong></div>
+                            <div class="col-6">{{ constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION') }}</div>
+                            
+                            <div class="col-6"><strong>Environment:</strong></div>
+                            <div class="col-6">
+                                <span class="badge bg-{{ app.environment == 'prod' ? 'success' : 'warning' }}">
+                                    {{ app.environment|upper }}
+                                </span>
+                            </div>
+                            
+                            <div class="col-6"><strong>Debug Mode:</strong></div>
+                            <div class="col-6">
+                                <span class="badge bg-{{ app.debug ? 'danger' : 'success' }}">
+                                    {{ app.debug ? 'ON' : 'OFF' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="clearCache()">
+                                <i class="fas fa-trash me-2"></i>
+                                Clear Cache
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" onclick="optimizeDatabase()">
+                                <i class="fas fa-database me-2"></i>
+                                Optimize Database
+                            </button>
+                            <a href="{{ path('admin_system_backup') }}" class="btn btn-outline-success">
+                                <i class="fas fa-download me-2"></i>
+                                Create Backup
+                            </a>
+                            <button type="button" class="btn btn-outline-info" onclick="testConnections()">
+                                <i class="fas fa-network-wired me-2"></i>
+                                Test Connections
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            Save Settings
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-lg ms-2" onclick="window.location.reload()">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            submitButton.disabled = true;
+            
+            // Simulate save delay
+            setTimeout(() => {
+                this.submit();
+            }, 1000);
+        });
+
+        function clearCache() {
+            if (confirm('Are you sure you want to clear the application cache?')) {
+                fetch('/admin/system/clear-cache', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Cache cleared successfully!');
+                    } else {
+                        alert('Error clearing cache: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function optimizeDatabase() {
+            if (confirm('Are you sure you want to optimize the database? This may take several minutes.')) {
+                const button = event.target;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Optimizing...';
+                button.disabled = true;
+                
+                fetch('/admin/system/optimize-database', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Database optimized successfully!');
+                    } else {
+                        alert('Error optimizing database: ' + data.message);
+                    }
+                })
+                .finally(() => {
+                    button.innerHTML = '<i class="fas fa-database me-2"></i>Optimize Database';
+                    button.disabled = false;
+                });
+            }
+        }
+
+        function testConnections() {
+            const button = event.target;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Testing...';
+            button.disabled = true;
+            
+            fetch('/admin/system/health-check')
+                .then(response => response.json())
+                .then(data => {
+                    const status = data.status === 'healthy' ? 'All connections are working properly!' : 'Some connections have issues. Check system logs for details.';
+                    alert(status);
+                })
+                .finally(() => {
+                    button.innerHTML = '<i class="fas fa-network-wired me-2"></i>Test Connections';
+                    button.disabled = false;
+                });
+        }
+
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all settings to their default values? This action cannot be undone.')) {
+                // Reset form to default values
+                const form = document.getElementById('settingsForm');
+                form.reset();
+                
+                // Set specific default values
+                form.querySelector('[name="settings[site_name]"]').value = 'MK Gov Administration';
+                form.querySelector('[name="settings[default_language]"]').value = 'en';
+                form.querySelector('[name="settings[timezone]"]').value = 'Africa/Douala';
+                form.querySelector('[name="settings[items_per_page]"]').value = '20';
+                
+                alert('Settings have been reset to default values. Click "Save Settings" to apply the changes.');
+            }
+        }
+
+        // Add change detection
+        let originalFormData = new FormData(document.getElementById('settingsForm'));
+        let hasChanges = false;
+
+        document.getElementById('settingsForm').addEventListener('change', function() {
+            hasChanges = true;
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+            }
+        });
+    </script>
+{% endblock %}

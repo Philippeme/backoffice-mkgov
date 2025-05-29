@@ -1,0 +1,617 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}{{ page_title }} - MK Gov Admin{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="fas fa-users me-2"></i>
+                    {{ page_title }}
+                </h1>
+                <p class="page-subtitle text-muted">Manage system users, roles and permissions</p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{{ path('admin_users_new') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-1"></i>
+                        New User
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-tools me-1"></i>
+                        Tools
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importUsersModal">
+                            <i class="fas fa-upload me-2"></i>Import Users</a></li>
+                        <li><a class="dropdown-item" href="{{ path('admin_users_export', {format: 'csv'}) }}" target="_blank">
+                            <i class="fas fa-download me-2"></i>Export CSV</a></li>
+                        <li><a class="dropdown-item" href="{{ path('admin_users_export', {format: 'excel'}) }}" target="_blank">
+                            <i class="fas fa-file-excel me-2"></i>Export Excel</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="sendWelcomeEmails()">
+                            <i class="fas fa-envelope me-2"></i>Send Welcome Emails</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- User Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="h4 mb-0">{{ users.getTotalItemCount }}</div>
+                            <div class="small">Total Users</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-check fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="h4 mb-0" id="activeCount">--</div>
+                            <div class="small">Active Users</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-times fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="h4 mb-0" id="inactiveCount">--</div>
+                            <div class="small">Inactive Users</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="h4 mb-0" id="recentLogins">--</div>
+                            <div class="small">Recent Logins</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filter Users
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" value="{{ app.request.query.get('search') }}" placeholder="Search users...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Role</label>
+                    <select class="form-select" name="role">
+                        <option value="">All Roles</option>
+                        <option value="ROLE_ADMIN" {{ app.request.query.get('role') == 'ROLE_ADMIN' ? 'selected' : '' }}>Admin</option>
+                        <option value="ROLE_MODERATOR" {{ app.request.query.get('role') == 'ROLE_MODERATOR' ? 'selected' : '' }}>Moderator</option>
+                        <option value="ROLE_USER" {{ app.request.query.get('role') == 'ROLE_USER' ? 'selected' : '' }}>User</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {{ app.request.query.get('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ app.request.query.get('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Registration Date</label>
+                    <input type="date" class="form-control" name="date_from" value="{{ app.request.query.get('date_from') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>
+                            Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-0">Users List</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="bulkActions" disabled>
+                            <i class="fas fa-check-square me-1"></i>
+                            Bulk Actions
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" disabled>
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-action="activate">Activate Selected</a></li>
+                            <li><a class="dropdown-item" href="#" data-action="deactivate">Deactivate Selected</a></li>
+                            <li><a class="dropdown-item" href="#" data-action="reset_password">Reset Passwords</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" data-action="delete">Delete Selected</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if users.items|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="40">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>User</th>
+                                <th>Roles</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Registered</th>
+                                <th>Permissions</th>
+                                <th width="140">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input user-checkbox" value="{{ user.id }}">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ asset('images/avatars/default-avatar.png') }}" class="rounded-circle me-3" width="40" height="40">
+                                            <div>
+                                                <div class="fw-medium">{{ user.fullName }}</div>
+                                                <small class="text-muted">{{ user.email }}</small>
+                                                {% if user.phoneNumber %}
+                                                    <div><small class="text-muted"><i class="fas fa-phone me-1"></i>{{ user.phoneNumber }}</small></div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% for role in user.roles %}
+                                            {% if role != 'ROLE_USER' %}
+                                                <span class="badge bg-{{ role == 'ROLE_ADMIN' ? 'danger' : (role == 'ROLE_MODERATOR' ? 'warning' : 'secondary') }} me-1">
+                                                    {{ role|replace('ROLE_', '')|title }}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if user.roles|length == 1 and user.roles[0] == 'ROLE_USER' %}
+                                            <span class="badge bg-secondary">User</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-{{ user.isActive ? 'success' : 'danger' }} me-2">
+                                                {{ user.isActive ? 'Active' : 'Inactive' }}
+                                            </span>
+                                            {% if user.mustChangePassword %}
+                                                <span class="badge bg-warning">Password Reset Required</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.lastLoginAt %}
+                                            <div class="small">{{ user.lastLoginAt|date('d/m/Y H:i') }}</div>
+                                            <small class="text-muted">{{ user.lastLoginAt|ago }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="small">{{ user.createdAt|date('d/m/Y') }}</div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-info btn-sm" 
+                                                onclick="showPermissions({{ user.id }})"
+                                                title="View Permissions">
+                                            <i class="fas fa-key"></i>
+                                            <span class="badge bg-info">{{ user.permissions|length }}</span>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ path('admin_users_show', {id: user.id}) }}" class="btn btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ path('admin_users_edit', {id: user.id}) }}" class="btn btn-outline-secondary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-{{ user.isActive ? 'warning' : 'success' }}" 
+                                                    onclick="toggleUserStatus({{ user.id }})" 
+                                                    title="{{ user.isActive ? 'Deactivate' : 'Activate' }}">
+                                                <i class="fas fa-{{ user.isActive ? 'pause' : 'play' }}"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="More Actions">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="{{ path('admin_users_permissions', {id: user.id}) }}">
+                                                    <i class="fas fa-key me-2"></i>Manage Permissions</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="resetPassword({{ user.id }})">
+                                                    <i class="fas fa-lock me-2"></i>Reset Password</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="sendWelcomeEmail({{ user.id }})">
+                                                    <i class="fas fa-envelope me-2"></i>Send Welcome Email</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" onclick="viewUserActivity({{ user.id }})">
+                                                    <i class="fas fa-history me-2"></i>View Activity</a></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteUser({{ user.id }})">
+                                                    <i class="fas fa-trash me-2"></i>Delete User</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Users pagination">
+                    {{ knp_pagination_render(users) }}
+                </nav>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No users found</h5>
+                    <p class="text-muted">No users match your current filters.</p>
+                    <a href="{{ path('admin_users_index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-refresh me-1"></i>
+                        Clear Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Import Users Modal -->
+    <div class="modal fade" id="importUsersModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-upload me-2"></i>
+                        Import Users
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="importUsersForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">Select Import File</label>
+                            <input type="file" class="form-control" name="import_file" accept=".csv,.xlsx" required>
+                            <div class="form-text">Supported formats: CSV, Excel</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Default Role for New Users</label>
+                            <select class="form-select" name="default_role">
+                                <option value="ROLE_USER">User</option>
+                                <option value="ROLE_MODERATOR">Moderator</option>
+                                <option value="ROLE_ADMIN">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="sendWelcomeEmails" name="send_welcome_emails" checked>
+                                <label class="form-check-label" for="sendWelcomeEmails">
+                                    Send welcome emails to new users
+                                </label>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>CSV Format:</strong> email, first_name, last_name, phone_number
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="importUsersForm" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>
+                        Import Users
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Permissions Modal -->
+    <div class="modal fade" id="permissionsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-key me-2"></i>
+                        User Permissions
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="permissionsContent">
+                    <!-- Content loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        // Load statistics
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserStats();
+        });
+
+        function loadUserStats() {
+            const users = {{ users.items|json_encode|raw }};
+            
+            const activeCount = users.filter(u => u.isActive).length;
+            const inactiveCount = users.filter(u => !u.isActive).length;
+            const recentLogins = users.filter(u => u.lastLoginAt && new Date(u.lastLoginAt) > new Date(Date.now() - 7*24*60*60*1000)).length;
+            
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('inactiveCount').textContent = inactiveCount;
+            document.getElementById('recentLogins').textContent = recentLogins;
+        }
+
+        // Select all functionality
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkActions();
+        });
+
+        // Individual checkbox functionality
+        document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActions);
+        });
+
+        function updateBulkActions() {
+            const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+            const bulkButton = document.getElementById('bulkActions');
+            const dropdownToggle = bulkButton.nextElementSibling;
+            
+            if (checkedBoxes.length > 0) {
+                bulkButton.disabled = false;
+                dropdownToggle.disabled = false;
+                bulkButton.innerHTML = `<i class="fas fa-check-square me-1"></i>${checkedBoxes.length} Selected`;
+            } else {
+                bulkButton.disabled = true;
+                dropdownToggle.disabled = true;
+                bulkButton.innerHTML = '<i class="fas fa-check-square me-1"></i>Bulk Actions';
+            }
+        }
+
+        function toggleUserStatus(userId) {
+            if (confirm('Are you sure you want to change the status of this user?')) {
+                fetch(`/admin/users/${userId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function resetPassword(userId) {
+            if (confirm('Are you sure you want to reset this user\'s password? They will receive an email with a temporary password.')) {
+                fetch(`/admin/users/${userId}/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Password reset email sent successfully!');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function sendWelcomeEmail(userId) {
+            fetch(`/admin/users/${userId}/send-welcome`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Welcome email sent successfully!');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
+        }
+
+        function sendWelcomeEmails() {
+            if (confirm('Send welcome emails to all users who haven\'t received one?')) {
+                fetch('/admin/users/send-welcome-all', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Welcome emails sent to ${data.count} users!`);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function showPermissions(userId) {
+            fetch(`/admin/users/${userId}/permissions-data`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('permissionsContent').innerHTML = data.html;
+                        const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
+                        modal.show();
+                    } else {
+                        alert('Error loading permissions: ' + data.message);
+                    }
+                });
+        }
+
+        function viewUserActivity(userId) {
+            window.open(`/admin/users/${userId}/activity`, '_blank');
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user? This action cannot be undone and will also delete all associated data (requests, documents, etc.).')) {
+                fetch(`/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Error deleting user');
+                    }
+                });
+            }
+        }
+
+        // Import form handling
+        document.getElementById('importUsersForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
+            submitButton.disabled = true;
+            
+            fetch('/admin/users/import', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Successfully imported ${data.count} users!`);
+                    location.reload();
+                } else {
+                    alert('Import failed: ' + data.message);
+                }
+            })
+            .finally(() => {
+                submitButton.innerHTML = '<i class="fas fa-upload me-1"></i>Import Users';
+                submitButton.disabled = false;
+            });
+        });
+
+        // Bulk actions
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.dataset.action;
+                const selectedIds = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+                
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one user.');
+                    return;
+                }
+
+                let message = `Are you sure you want to ${action} ${selectedIds.length} selected users?`;
+                if (action === 'delete') {
+                    message = `Are you sure you want to delete ${selectedIds.length} selected users? This action cannot be undone.`;
+                }
+
+                if (confirm(message)) {
+                    fetch('/admin/users/api/bulk-action', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            action: action,
+                            ids: selectedIds
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (action === 'reset_password') {
+                                alert(`Password reset emails sent to ${selectedIds.length} users!`);
+                            } else {
+                                location.reload();
+                            }
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}{{ page_title }} - MK Gov Admin{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="fas fa-building me-2"></i>
+                    {{ page_title }}
+                </h1>
+                <p class="page-subtitle text-muted">Manage government entities and organizations</p>
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('admin_entities_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    New Entity
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filter Entities
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" value="{{ app.request.query.get('search') }}" placeholder="Search entities...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="type">
+                        <option value="">All Types</option>
+                        <option value="ministry" {{ app.request.query.get('type') == 'ministry' ? 'selected' : '' }}>Ministry</option>
+                        <option value="agency" {{ app.request.query.get('type') == 'agency' ? 'selected' : '' }}>Agency</option>
+                        <option value="department" {{ app.request.query.get('type') == 'department' ? 'selected' : '' }}>Department</option>
+                        <option value="prefecture" {{ app.request.query.get('type') == 'prefecture' ? 'selected' : '' }}>Prefecture</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Region</label>
+                    <select class="form-select" name="region">
+                        <option value="">All Regions</option>
+                        <option value="centre" {{ app.request.query.get('region') == 'centre' ? 'selected' : '' }}>Centre</option>
+                        <option value="littoral" {{ app.request.query.get('region') == 'littoral' ? 'selected' : '' }}>Littoral</option>
+                        <option value="ouest" {{ app.request.query.get('region') == 'ouest' ? 'selected' : '' }}>Ouest</option>
+                        <option value="nord" {{ app.request.query.get('region') == 'nord' ? 'selected' : '' }}>Nord</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {{ app.request.query.get('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ app.request.query.get('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>
+                            Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Entities List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-0">Entities List</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="bulkActions" disabled>
+                            <i class="fas fa-check-square me-1"></i>
+                            Bulk Actions
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" disabled>
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-action="activate">Activate Selected</a></li>
+                            <li><a class="dropdown-item" href="#" data-action="deactivate">Deactivate Selected</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" data-action="delete">Delete Selected</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if entities.items|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="40">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Region</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th width="120">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entity in entities %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input entity-checkbox" value="{{ entity.id }}">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <div class="fw-medium">{{ entity.name }}</div>
+                                                {% if entity.description %}
+                                                    <small class="text-muted">{{ entity.description|length > 50 ? entity.description|slice(0, 50) ~ '...' : entity.description }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ entity.type|title }}</span>
+                                    </td>
+                                    <td>{{ entity.region|title }}</td>
+                                    <td>
+                                        {% if entity.phoneNumber %}
+                                            <div><i class="fas fa-phone me-1"></i>{{ entity.phoneNumber }}</div>
+                                        {% endif %}
+                                        {% if entity.email %}
+                                            <div><i class="fas fa-envelope me-1"></i>{{ entity.email }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ entity.isActive ? 'success' : 'danger' }}">
+                                            {{ entity.isActive ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ entity.createdAt|date('d/m/Y') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ path('admin_entities_show', {id: entity.id}) }}" class="btn btn-outline-primary" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ path('admin_entities_edit', {id: entity.id}) }}" class="btn btn-outline-secondary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-{{ entity.isActive ? 'warning' : 'success' }}" 
+                                                    onclick="toggleEntityStatus({{ entity.id }})" 
+                                                    title="{{ entity.isActive ? 'Deactivate' : 'Activate' }}">
+                                                <i class="fas fa-{{ entity.isActive ? 'pause' : 'play' }}"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Entities pagination">
+                    {{ knp_pagination_render(entities) }}
+                </nav>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No entities found</h5>
+                    <p class="text-muted">Get started by creating your first public entity.</p>
+                    <a href="{{ path('admin_entities_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Create Entity
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        // Select all functionality
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.entity-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkActions();
+        });
+
+        // Individual checkbox functionality
+        document.querySelectorAll('.entity-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActions);
+        });
+
+        function updateBulkActions() {
+            const checkedBoxes = document.querySelectorAll('.entity-checkbox:checked');
+            const bulkButton = document.getElementById('bulkActions');
+            const dropdownToggle = bulkButton.nextElementSibling;
+            
+            if (checkedBoxes.length > 0) {
+                bulkButton.disabled = false;
+                dropdownToggle.disabled = false;
+                bulkButton.textContent = `${checkedBoxes.length} Selected`;
+            } else {
+                bulkButton.disabled = true;
+                dropdownToggle.disabled = true;
+                bulkButton.innerHTML = '<i class="fas fa-check-square me-1"></i>Bulk Actions';
+            }
+        }
+
+        function toggleEntityStatus(entityId) {
+            if (confirm('Are you sure you want to change the status of this entity?')) {
+                fetch(`/admin/entities/${entityId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        // Bulk actions
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.dataset.action;
+                const selectedIds = Array.from(document.querySelectorAll('.entity-checkbox:checked')).map(cb => cb.value);
+                
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one entity.');
+                    return;
+                }
+
+                const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+                if (confirm(`Are you sure you want to ${action} ${selectedIds.length} selected entities?`)) {
+                    fetch('/admin/entities/api/bulk-action', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            action: action,
+                            ids: selectedIds
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}

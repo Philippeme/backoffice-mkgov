@@ -1,0 +1,498 @@
+{% extends 'admin/layout/base.html.twig' %}
+
+{% block title %}{{ page_title }} - MK Gov Admin{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="fas fa-list-alt me-2"></i>
+                    {{ page_title }}
+                </h1>
+                <p class="page-subtitle text-muted">Monitor system activities and troubleshoot issues</p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary" onclick="refreshLogs()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Refresh
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-tools me-1"></i>
+                        Tools
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="exportLogs()">
+                            <i class="fas fa-download me-2"></i>Export Logs</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#clearLogsModal">
+                            <i class="fas fa-trash me-2"></i>Clear Old Logs</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="viewLogStats()">
+                            <i class="fas fa-chart-bar me-2"></i>View Statistics</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Log Level Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <div class="h4 mb-0" id="infoCount">--</div>
+                    <div class="small">Info</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <div class="h4 mb-0" id="warningCount">--</div>
+                    <div class="small">Warning</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <div class="h4 mb-0" id="errorCount">--</div>
+                    <div class="small">Error</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-dark text-white">
+                <div class="card-body text-center">
+                    <div class="h4 mb-0" id="criticalCount">--</div>
+                    <div class="small">Critical</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-database fa-2x text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="h4 mb-0">{{ logs.getTotalItemCount }}</div>
+                            <div class="small text-muted">Total Log Entries</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Filter Logs
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Level</label>
+                    <select class="form-select" name="level">
+                        <option value="">All Levels</option>
+                        <option value="info" {{ app.request.query.get('level') == 'info' ? 'selected' : '' }}>Info</option>
+                        <option value="warning" {{ app.request.query.get('level') == 'warning' ? 'selected' : '' }}>Warning</option>
+                        <option value="error" {{ app.request.query.get('level') == 'error' ? 'selected' : '' }}>Error</option>
+                        <option value="critical" {{ app.request.query.get('level') == 'critical' ? 'selected' : '' }}>Critical</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        <option value="authentication" {{ app.request.query.get('category') == 'authentication' ? 'selected' : '' }}>Authentication</option>
+                        <option value="request" {{ app.request.query.get('category') == 'request' ? 'selected' : '' }}>Request</option>
+                        <option value="system" {{ app.request.query.get('category') == 'system' ? 'selected' : '' }}>System</option>
+                        <option value="database" {{ app.request.query.get('category') == 'database' ? 'selected' : '' }}>Database</option>
+                        <option value="api" {{ app.request.query.get('category') == 'api' ? 'selected' : '' }}>API</option>
+                        <option value="security" {{ app.request.query.get('category') == 'security' ? 'selected' : '' }}>Security</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Date From</label>
+                    <input type="date" class="form-control" name="date_from" value="{{ app.request.query.get('date_from') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Date To</label>
+                    <input type="date" class="form-control" name="date_to" value="{{ app.request.query.get('date_to') }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search Message</label>
+                    <input type="text" class="form-control" name="search" value="{{ app.request.query.get('search') }}" placeholder="Search in messages...">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logs List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-0">System Logs</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoRefresh">
+                        <label class="form-check-label" for="autoRefresh">
+                            Auto Refresh
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if logs.items|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="120">Timestamp</th>
+                                <th width="80">Level</th>
+                                <th width="100">Category</th>
+                                <th>Message</th>
+                                <th width="120">User</th>
+                                <th width="100">IP Address</th>
+                                <th width="60">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                                <tr class="log-entry log-{{ log.level }}">
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ log.createdAt|date('d/m H:i:s') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% set levelClass = {
+                                            'info': 'info',
+                                            'warning': 'warning',
+                                            'error': 'danger',
+                                            'critical': 'dark'
+                                        } %}
+                                        <span class="badge bg-{{ levelClass[log.level] ?? 'secondary' }}">
+                                            {{ log.level|upper }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ log.category|title }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="log-message">
+                                            {{ log.message }}
+                                            {% if log.context|length > 0 %}
+                                                <button type="button" class="btn btn-link btn-sm p-0 ms-2" 
+                                                        onclick="showContext({{ log.id }})"
+                                                        title="View Context">
+                                                    <i class="fas fa-info-circle text-info"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if log.user %}
+                                            <div class="small">
+                                                <div class="fw-medium">{{ log.user.fullName }}</div>
+                                                <small class="text-muted">{{ log.user.email }}</small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">System</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.ipAddress %}
+                                            <small class="font-monospace">{{ log.ipAddress }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                onclick="showLogDetails({{ log.id }})"
+                                                title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="card-footer">
+                    {{ knp_pagination_render(logs) }}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-list-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No logs found</h5>
+                    <p class="text-muted">No log entries match your current filters.</p>
+                    <a href="{{ path('admin_system_logs') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-refresh me-1"></i>
+                        Clear Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Clear Logs Modal -->
+    <div class="modal fade" id="clearLogsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-trash me-2 text-danger"></i>
+                        Clear System Logs
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="clearLogsForm">
+                        <div class="mb-3">
+                            <label class="form-label">Keep logs from the last</label>
+                            <select class="form-select" name="days_to_keep" required>
+                                <option value="7">7 days</option>
+                                <option value="30" selected>30 days</option>
+                                <option value="90">90 days</option>
+                                <option value="365">1 year</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Only clear logs of level</label>
+                            <select class="form-select" name="level_filter">
+                                <option value="">All levels</option>
+                                <option value="info">Info only</option>
+                                <option value="warning">Warning and below</option>
+                                <option value="error">Error and below</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> This action cannot be undone. Cleared logs will be permanently deleted.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="clearLogsForm" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Clear Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Details Modal -->
+    <div class="modal fade" id="logDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Log Entry Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="logDetailsContent">
+                    <!-- Content loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        let autoRefreshInterval;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLogStats();
+            
+            // Auto refresh toggle
+            document.getElementById('autoRefresh').addEventListener('change', function() {
+                if (this.checked) {
+                    startAutoRefresh();
+                } else {
+                    stopAutoRefresh();
+                }
+            });
+        });
+
+        function loadLogStats() {
+            const logs = {{ logs.items|json_encode|raw }};
+            
+            const infoCount = logs.filter(l => l.level === 'info').length;
+            const warningCount = logs.filter(l => l.level === 'warning').length;
+            const errorCount = logs.filter(l => l.level === 'error').length;
+            const criticalCount = logs.filter(l => l.level === 'critical').length;
+            
+            document.getElementById('infoCount').textContent = infoCount;
+            document.getElementById('warningCount').textContent = warningCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('criticalCount').textContent = criticalCount;
+        }
+
+        function refreshLogs() {
+            const button = event.target;
+            const icon = button.querySelector('i');
+            
+            icon.classList.add('fa-spin');
+            
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        }
+
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                location.reload();
+            }, 30000); // Refresh every 30 seconds
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        function showLogDetails(logId) {
+            fetch(`/admin/system/logs/${logId}/details`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('logDetailsContent').innerHTML = data.html;
+                        const modal = new bootstrap.Modal(document.getElementById('logDetailsModal'));
+                        modal.show();
+                    } else {
+                        alert('Error loading log details: ' + data.message);
+                    }
+                });
+        }
+
+        function showContext(logId) {
+            fetch(`/admin/system/logs/${logId}/context`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Context: ' + JSON.stringify(data.context, null, 2));
+                    } else {
+                        alert('Error loading context: ' + data.message);
+                    }
+                });
+        }
+
+        function exportLogs() {
+            const url = new URL(window.location);
+            url.pathname = '/admin/system/logs/export';
+            window.open(url.toString(), '_blank');
+        }
+
+        function viewLogStats() {
+            window.open('/admin/system/logs/statistics', '_blank');
+        }
+
+        // Clear logs form handling
+        document.getElementById('clearLogsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Clearing...';
+            submitButton.disabled = true;
+            
+            fetch('/admin/system/logs/clear', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .finally(() => {
+                submitButton.innerHTML = '<i class="fas fa-trash me-1"></i>Clear Logs';
+                submitButton.disabled = false;
+            });
+        });
+
+        // Real-time log highlighting for critical entries
+        document.querySelectorAll('.log-critical, .log-error').forEach(row => {
+            row.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+        });
+
+        // Cleanup auto refresh on page unload
+        window.addEventListener('beforeunload', function() {
+            stopAutoRefresh();
+        });
+    </script>
+
+    <style>
+        .log-entry {
+            font-size: 0.875rem;
+        }
+        
+        .log-message {
+            max-width: 400px;
+            word-wrap: break-word;
+        }
+        
+        .log-critical {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .log-error {
+            border-left: 4px solid #fd7e14;
+        }
+        
+        .log-warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .log-info {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .font-monospace {
+            font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+        }
+    </style>
+{% endblock %}
